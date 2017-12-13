@@ -1,0 +1,258 @@
+<html>
+<head>
+	<title>Page administrateur</title>
+	<!-- On charge JQuery -->
+                <meta charset="UTF-8">
+              <link rel="stylesheet" href="styleAdmin.css" />
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<!-- On charge l'API Google -->
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+	<script type="text/javascript">
+		google.load("visualization", "1", {packages: ["corechart"]});
+                google.load('visualization',"1", {'packages':['table']});
+		// Après le chargement de la page, on fait l'appel AJAX
+
+
+            function GoogleChartLoad() {
+                doAjaxProduit();
+                doAjaxGeo();
+                doAjaxClient();
+
+            }
+
+            function drawTable(dataArray,type,chart) {
+                var data = google.visualization.arrayToDataTable(dataArray);
+                       
+                    if (type === "product") {
+                    //on lui donne un titre particulier
+                    var options = {'title': "Chiffre d'affaires par type de produit",
+                        'width': 300,
+                        'height': 600};
+                    //on le dessine au bon endroit
+                var chart_div = document.getElementById('tableproduit');
+
+                var table = new google.visualization.Table(chart_div);
+                    //on le dessine
+
+                    table.draw(data, options);
+                    //idem pour la zone géographique
+                } else if (type === "geo") {
+                    var options = {'title': "Chiffre d'affaires par zone géographique",
+                        'width': 300,
+                        'height': 600};
+                var table = new google.visualization.Table(document.getElementById('tablegeo'));
+                    table.draw(data, options);
+                    //idem pour les clients
+                } else if (type === "customer") {
+                    var options = {'title': "Chiffre d'affaires par client",
+                        'width': 300,
+                        'height': 600};
+                var table = new google.visualization.Table(document.getElementById('tableclient'));
+                    table.draw(data, options);
+                }
+
+}
+       
+
+            
+		function drawChart(dataArray,type) {
+                    var e = document.getElementById("selecttype");
+                    var texte = e.options[e.selectedIndex].text;
+                    
+			var data = google.visualization.arrayToDataTable(dataArray);
+
+                    if (type === "product") {
+                    //on lui donne un titre particulier
+                    var options = {'title': "Chiffre d'affaires par type de produit",
+                        is3D: true,
+                        'width': 1000,
+                        'height': 700};
+                    //on le dessine au bon endroit
+                    
+                     if (texte === "Histogram"){
+                         var chart = new google.visualization.Histogram(document.getElementById('googlechartproduit'));
+                         
+                    }
+                    if(texte === "PieChart"){
+                        var chart = new google.visualization.PieChart(document.getElementById('googlechartproduit'));
+
+                    }
+                    
+                    if(texte === "BarChart"){
+                        var chart = new google.visualization.BarChart(document.getElementById('googlechartproduit'));
+                    }
+                    chart.draw(data, options);
+                    
+                } else if (type === "geo") {
+                    var options = {'title': "Chiffre d'affaires par zone géographique",
+                        is3D: true,
+                        'width': 1000,
+                        'height': 700};
+                    if (texte === "Histogram"){
+                         var chart = new google.visualization.Histogram(document.getElementById('googlechartgeo'));
+
+                    }
+                    if(texte === "PieChart"){
+                        var chart = new google.visualization.PieChart(document.getElementById('googlechartgeo'));
+
+                    }
+                    
+                    if(texte === "BarChart"){
+                        var chart = new google.visualization.BarChart(document.getElementById('googlechartgeo'));
+                    }
+                    chart.draw(data, options);
+                    //idem pour les clients
+                } else if (type === "customer") { 
+                    var options = {'title': "Chiffre d'affaires par client",
+                         is3D: true,
+                        'width': 1000,
+                        'height': 700};
+                    if (texte === "Histogram"){
+                         var chart = new google.visualization.Histogram(document.getElementById('googlechartclient'));
+
+                    }
+                    if(texte === "PieChart"){
+                        var chart = new google.visualization.PieChart(document.getElementById('googlechartclient'));
+
+                    }
+                    
+                    if(texte === "BarChart"){
+                        var chart = new google.visualization.BarChart(document.getElementById('googlechartclient'));
+                    }
+                    
+                    chart.draw(data, options);
+                }
+
+		}
+
+		// Afficher les ventes par client
+		function doAjaxClient() {
+
+			$.ajax({
+				url: "ChiffreAffaireClient",
+                                data :{"dateDebut": $("#dateDepart").val(), "dateFin": $("#dateFin").val()},
+				dataType: "json",
+				success: // La fonction qui traite les résultats
+					function (result) {
+						// On reformate le résultat comme un tableau
+						var chartData = [];
+						// On met le descriptif des données
+						chartData.push(["Client", "Chiifre d'affaire"]);
+						for(var client in result.records) {
+							chartData.push([client, result.records[client]]);
+						}
+						// On dessine le graphique
+						drawChart(chartData,"customer");
+                                                drawTable(chartData,"customer");
+
+					},
+				error: showError
+			});
+		}
+                
+                function doAjaxProduit() {
+
+			$.ajax({
+				url: "ChiffreDaffaireParProduit",
+                                data :{"dateDebut": $("#dateDepart").val(), "dateFin": $("#dateFin").val()},
+				dataType: "json",
+				success: // La fonction qui traite les résultats
+					function (result) {
+						// On reformate le résultat comme un tableau
+						var chartData = [];
+						// On met le descriptif des données
+						chartData.push(["Produit", "Chiffre d'affaire"]);
+						for(var produit in result.records) {
+							chartData.push([produit, result.records[produit]]);
+						}
+						// On dessine le graphique
+						drawChart(chartData,"product");
+                                                drawTable(chartData,"product");
+
+					},
+				error: showError
+			});
+		}
+		function doAjaxGeo() {
+
+			$.ajax({
+				url: "ChiffreAffaireParGeo",
+                                data :{"dateDebut": $("#dateDepart").val(), "dateFin": $("#dateFin").val()},
+				dataType: "json",
+				success: // La fonction qui traite les résultats
+					function (result) {
+						// On reformate le résultat comme un tableau
+						var chartData = [];
+						// On met le descriptif des données
+						chartData.push(["Localisation", "Chiffre d'affaire"]);
+						for(var geo in result.records) {
+							chartData.push([geo, result.records[geo]]);
+						}
+						// On dessine le graphique
+						drawChart(chartData,"geo");
+                                                drawTable(chartData,"geo");
+
+					},
+				error: showError
+			});
+		}
+		// Fonction qui traite les erreurs de la requête
+		function showError(xhr, status, message) {
+			alert("Erreur: " + status + " : " + message);
+		}
+    
+	</script>
+</head>
+<body>
+        <h1>Page d'administration </h1>
+
+       <div class="overlay"></div>
+       
+        <form action="Logout" method="post">
+                    <input type="submit" value="Logout" />
+                 
+        </form>
+
+        <form id="codeForm">
+            <fieldset id="Fieldset"><legend>Saisie des paramètres</legend>
+                <div  class="select">
+                 Type de Visualisation graphique : <select id="selecttype" class="ui dropdown">
+                    <option >PieChart</option>
+                    <option>BarChart</option>
+                    <option>Histogram</option>
+            </select>
+
+                </div>
+                <div id="dates">
+                Date de début :<input id="dateDepart" name="datedebut" type="date">
+                Date de fin :<input id="dateFin" name="datefin" type="date" >
+                </div>
+            <div class="submit-container">
+
+             <button class="submit-button" id="entree" onclick="GoogleChartLoad();return false;">Afficher</button>          
+            </div>
+            </fieldset>
+        </form>
+        
+        <div id="tablechart">
+        <div id="produit">
+            <div  id="googlechartproduit"></div>
+            <div id="tableproduit"></div>
+        </div>
+        
+        <div id="geo">
+                <div  id="googlechartgeo"></div>
+                <div id="tablegeo"></div>
+
+        </div>
+        <div id ="client">
+            <div id="googlechartclient"></div>
+             <div id="tableclient"></div>
+        </div>
+        </div>
+</body>
+</html>
